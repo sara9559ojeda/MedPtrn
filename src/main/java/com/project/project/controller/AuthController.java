@@ -15,7 +15,7 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
-    // Endpoint de login
+   
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody Map<String, String> credentials) {
         Map<String, String> response = new HashMap<>();
@@ -32,7 +32,7 @@ public class AuthController {
         return response;
     }
 
-    // Endpoint para registrar un usuario (opcional, solo para pruebas)
+    
     @PostMapping("/register")
     public User register(@RequestBody User user) {
         return userService.registerUser(user);

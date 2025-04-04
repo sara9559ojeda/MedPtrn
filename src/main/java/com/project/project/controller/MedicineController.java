@@ -1,19 +1,17 @@
 package com.project.project.controller;
+
 import java.util.List;
 import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 import com.project.project.entity.Medicine;
 import com.project.project.service.MedicineService;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
-
+import jakarta.persistence.EntityNotFoundException;
 
 @RestController
 @RequestMapping(path = "api/medicine")
@@ -22,26 +20,48 @@ public class MedicineController {
     private MedicineService medicineService;
 
     @GetMapping
-    public List<Medicine>  getAll(){
-        return medicineService.getMedicine();
+    public ResponseEntity<List<Medicine>> getAll() {
+        return ResponseEntity.ok(medicineService.getMedicine());
     }
+
     @GetMapping("/{id}")
-    public Optional<Medicine> getById(@PathVariable("id") Long id){
-        return medicineService.getMedicine(id);
+    public ResponseEntity<Medicine> getById(@PathVariable("id") Long id) {
+        Optional<Medicine> medicine = medicineService.getMedicine(id);
+        return medicine.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
     }
+
     @PostMapping
-    public void save(@RequestBody Medicine medicine){
+    public ResponseEntity<?> save(@RequestBody Medicine medicine) {
+        if (medicine.getName() == null || medicine.getName().isEmpty()) {
+            return ResponseEntity.badRequest().body("Medicine name cannot be empty");
+        }
+        if (medicine.getPrice() == null || medicine.getPrice() <= 0) {
+            return ResponseEntity.badRequest().body("Price must be greater than zero");
+        }
+        if (medicine.getQuantity() < 0) {
+            return ResponseEntity.badRequest().body("Quantity cannot be negative");
+        }
         medicineService.save(medicine);
-    }
-     @PutMapping("/{id}")  //http://localhost:8080/api/medicine/{{id}}
-    public void update(@PathVariable("id") Long id, @RequestBody Medicine medicine) {
-        medicineService.update(id, medicine);
+        return ResponseEntity.status(HttpStatus.CREATED).body("Medicine added successfully");
     }
 
-    @DeleteMapping("/{id}") //http://localhost:8080/api/medicine/1
-    public void saveUpdate(@PathVariable("id") Long id){
+    @PutMapping("/{id}")
+    public ResponseEntity<?> update(@PathVariable("id") Long id, @RequestBody Medicine medicine) {
+        try {
+            medicineService.update(id, medicine);
+            return ResponseEntity.ok("Medicine updated successfully");
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> delete(@PathVariable("id") Long id) {
+        if (!medicineService.getMedicine(id).isPresent()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Medicine not found with id: " + id);
+        }
         medicineService.delete(id);
+        return ResponseEntity.ok("Medicine deleted successfully");
     }
-
-
 }

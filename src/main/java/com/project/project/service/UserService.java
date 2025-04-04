@@ -13,13 +13,13 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    // Método para validar el login
+    
     public boolean validateUser(String username, String password) {
         Optional<User> user = userRepository.findByUsername(username);
         return user.isPresent() && user.get().getPassword().equals(password);
     }
 
-    // Método para registrar un usuario (opcional)
+    
     public User registerUser(User user) {
         return userRepository.save(user);
     }
